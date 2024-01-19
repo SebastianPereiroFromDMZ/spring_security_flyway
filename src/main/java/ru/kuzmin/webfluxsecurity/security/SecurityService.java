@@ -32,9 +32,10 @@ public class SecurityService {
 
     //свмый первый из 3 перегруженных методов который вызывается из метода authenticated а дальже ниже они вызываются по цепочке
     private TokenDetails generateToken(UserEntity user) {
-        //генерим клеймсы (требования)
+        //генерим клеймсы (тело)
         Map<String, Object> claims = new HashMap<>() {{
             put("role", user.getRole());
+            put("username", user.getUsername());
         }};
         return generateToken(claims, user.getId().toString());
     }

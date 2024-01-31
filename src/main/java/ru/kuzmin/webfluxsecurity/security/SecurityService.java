@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 import ru.kuzmin.webfluxsecurity.entity.UserEntity;
 import ru.kuzmin.webfluxsecurity.exception.AuthException;
 import ru.kuzmin.webfluxsecurity.repository.UserRepository;
+import ru.kuzmin.webfluxsecurity.service.UserService;
 
 import java.util.*;
 
@@ -17,8 +18,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SecurityService {
 
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     //что необходимо для того чтобы сгенерировать токен? Токен состоит из 3 частей : заголовок, тело(инфо часть), подпись.
     // Для генерации подписи необходимо знать алгоритм с помощью которого мы это делаем и секретный ключь с помощью которого будем подписывать токен,
@@ -72,7 +73,7 @@ public class SecurityService {
                 .setExpiration(expirationDate)
                 //и самое главное нам этот токен необходимо подписать
                 //в подписе токена выбираем алгоритм SignatureAlgorithm.ES256 и секрет который мы закодируем через Base64
-                .signWith(SignatureAlgorithm.ES256, Base64.getEncoder().encodeToString(secret.getBytes()))
+                .signWith(SignatureAlgorithm.HS256, Base64.getEncoder().encodeToString(secret.getBytes()))
                 .compact();
         //возвращаем TokenDetails
         return TokenDetails.builder()
@@ -88,7 +89,7 @@ public class SecurityService {
     //метод аутентификации: получаем имя и пароль юзера, сверяем эти данные с БД если пользователь валиден даем TokenDetails, если нет кидаем ошибку
     public Mono<TokenDetails> authenticated(String username, String password) {
         //ищем юзера в БД
-        return userRepository.findByUsername(username)
+        return userService.getUserByUsername(username)
                 //если юзер найден в БД:
                 .flatMap(user -> {
                     //если пользователь не включон
